@@ -275,7 +275,7 @@ namespace SAUtils.InputFileParsers.ClinVar
                 var extendedOmimIds = GetOmimIds(variant);
 
                 var reviewStatEnum = ClinVarCommon.ReviewStatus.no_assertion;
-                if (ClinVarCommon.ReviewStatusNameMapping.ContainsKey(_reviewStatus))
+                if (_reviewStatus != null && ClinVarCommon.ReviewStatusNameMapping.ContainsKey(_reviewStatus))
                     reviewStatEnum = ClinVarCommon.ReviewStatusNameMapping[_reviewStatus];
 
                 clinvarList.Add(

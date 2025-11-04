@@ -29,9 +29,14 @@ namespace SAUtils.InputFileParsers.ClinVar
             "other",
             "association not found",
             "confers sensitivity",
+            "confers resistance",
+            "no classification",
             "no interpretation for the single variant",// observed in VCV XML only
+            "no classification for the single variant",
+            "evidence_only",
             
             "conflicting interpretations of pathogenicity", // observed in VCV XML only
+            "conflicting classifications of pathogenicity",
             "established risk allele", // observed in VCV XML only
             "likely risk allele",                            // observed in VCV XML only
 
@@ -42,7 +47,23 @@ namespace SAUtils.InputFileParsers.ClinVar
             "variant of unknown significance",
             "conflicting data from submitters",
             "uncertain risk allele",
-            "low penetrance"
+            "low penetrance",
+            
+            // Oncogenicity classifications (ClinVar VCV 2.5+)
+            "oncogenic",
+            "likely oncogenic",
+            "uncertain oncogenicity",
+            "benign or likely benign",
+            "predicted oncogenic",
+            
+            // Somatic clinical impact classifications (ClinVar VCV 2.5+)
+            "tier i - strong",
+            "tier ii - potential",
+            "tier iii - unknown",
+            "tier iv - benign",
+            
+            "variant to named protein",
+            "variation in modifier gene to disease"
         };
         public enum ReviewStatus
         {
@@ -72,12 +93,16 @@ namespace SAUtils.InputFileParsers.ClinVar
             ["no assertion criteria provided"]                       = ReviewStatus.no_criteria,
             ["practice guideline"]                                   = ReviewStatus.practice_guideline,
             ["criteria provided, conflicting interpretations"]       = ReviewStatus.conflicting_interpretations,
+            ["criteria provided, conflicting classifications"]       = ReviewStatus.conflicting_interpretations,
             ["reviewed by expert panel"]                             = ReviewStatus.expert_panel,
             ["classified by multiple submitters"]                    = ReviewStatus.multiple_submitters,
+            ["criteria provided, multiple submitters"]                = ReviewStatus.multiple_submitters,
             ["criteria provided, multiple submitters, no conflicts"] = ReviewStatus.multiple_submitters_no_conflict,
             ["criteria provided, single submitter"]                  = ReviewStatus.single_submitter,
-            ["no interpretation for the single variant"]  = ReviewStatus.no_interpretation_single,
-            ["no classifications from unflagged records"]            = ReviewStatus.no_assertion
+            ["no interpretation for the single variant"]             = ReviewStatus.no_interpretation_single,
+            ["no classification for the single variant"]             = ReviewStatus.no_interpretation_single,
+            ["no classifications from unflagged records"]            = ReviewStatus.no_assertion,
+            ["no classification provided"]                           = ReviewStatus.no_assertion
         };
 
         public static readonly Dictionary<ReviewStatus, string> ReviewStatusStrings = new Dictionary<ReviewStatus, string>
