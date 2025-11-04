@@ -29,9 +29,12 @@ public class ClinVarStats
             if (item.Id.StartsWith("RCV"))
             {
                 RcvCount++;
-                foreach (string significance in item.Significances)
+                if (item.Significances != null)
                 {
-                    RcvPathogenicityCounts.Increment(significance);
+                    foreach (string significance in item.Significances)
+                    {
+                        RcvPathogenicityCounts.Increment(significance);
+                    }
                 }
 
                 RcvReviewStatusCounts.Increment(ClinVarCommon.ReviewStatusStrings[item.ReviewStatus]);
@@ -40,9 +43,12 @@ public class ClinVarStats
             else
             {
                 VcvCount++;
-                foreach (string significance in item.Significances)
+                if (item.Significances != null)
                 {
-                    VcvPathogenicityCounts.Increment(significance);
+                    foreach (string significance in item.Significances)
+                    {
+                        VcvPathogenicityCounts.Increment(significance);
+                    }
                 }
 
                 VcvReviewStatusCounts.Increment(ClinVarCommon.ReviewStatusStrings[item.ReviewStatus]);
