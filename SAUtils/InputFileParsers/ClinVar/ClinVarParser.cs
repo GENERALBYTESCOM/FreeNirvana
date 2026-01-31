@@ -386,6 +386,13 @@ namespace SAUtils.InputFileParsers.ClinVar
         private const string ObservedInTag           = "ObservedIn";
         private const string SampleTag               = "Sample";
 
+        // New RCV 2.2+ schema tags (similar to VCV 2.5+)
+        private const string ClassificationsTag            = "Classifications";
+        private const string GermlineClassificationTag     = "GermlineClassification";
+        private const string OncogenicityClassificationTag = "OncogenicityClassification";
+        private const string SomaticClinicalImpactTag      = "SomaticClinicalImpact";
+        private const string NoClassificationTag           = "NoClassification";
+
         private void ParseRefClinVarAssertion(XElement xElement)
 		{
 			if (xElement==null || xElement.IsEmpty) return;
@@ -393,8 +400,19 @@ namespace SAUtils.InputFileParsers.ClinVar
             _lastUpdatedDate      = ParseDate(xElement.Attribute(UpdateDateTag)?.Value);
 		    _lastClinvarAccession = xElement.Element(ClinVarAccessionTag)?.Attribute(AccessionTag)?.Value;
             _id                   =  _lastClinvarAccession + "." + xElement.Element(ClinVarAccessionTag)?.Attribute(VersionTag)?.Value;
-            
-            GetClinicalSignificance(xElement.Element(ClinicalSignificanceTag));
+
+            // Try new RCV 2.2+ format (Classifications element) first
+            var classifications = xElement.Element(ClassificationsTag);
+            if (classifications != null && !classifications.IsEmpty)
+            {
+                GetClassificationsSignificance(classifications);
+            }
+            else
+            {
+                // Fall back to old format (ClinicalSignificance element)
+                GetClinicalSignificance(xElement.Element(ClinicalSignificanceTag));
+            }
+
             ParseGenotypeSet(xElement.Element(GenotypeSetTag));
 		    ParseMeasureSet(xElement.Element(MeasureSetTag));
 		    ParseTraitSet(xElement.Element(TraitSetTag));
@@ -714,11 +732,97 @@ namespace SAUtils.InputFileParsers.ClinVar
             ValidateSignificance(_significances);
         }
 
+        private void GetClassificationsSignificance(XElement classifications)
+        {
+            if (classifications == null || classifications.IsEmpty) return;
+
+            var germlineClassification = classifications.Element(GermlineClassificationTag);
+            var oncogenicityClassification = classifications.Element(OncogenicityClassificationTag);
+            var somaticClinicalImpact = classifications.Element(SomaticClinicalImpactTag);
+            var noClassification = classifications.Element(NoClassificationTag);
+
+            var allSignificances = new List<string>();
+            var reviewStatuses = new List<ClinVarCommon.ReviewStatus>();
+
+            // Process GermlineClassification
+            if (germlineClassification != null && !germlineClassification.IsEmpty)
+            {
+                ExtractClassificationData(germlineClassification, allSignificances, reviewStatuses);
+            }
+
+            // Process OncogenicityClassification
+            if (oncogenicityClassification != null && !oncogenicityClassification.IsEmpty)
+            {
+                ExtractClassificationData(oncogenicityClassification, allSignificances, reviewStatuses);
+            }
+
+            // Process SomaticClinicalImpact
+            if (somaticClinicalImpact != null && !somaticClinicalImpact.IsEmpty)
+            {
+                ExtractClassificationData(somaticClinicalImpact, allSignificances, reviewStatuses);
+            }
+
+            // Process NoClassification
+            if (noClassification != null && !noClassification.IsEmpty)
+            {
+                ExtractClassificationData(noClassification, allSignificances, reviewStatuses);
+            }
+
+            // Set the significances
+            _significances = allSignificances.Count > 0 ? allSignificances.Distinct().ToArray() : null;
+
+            // Set the review status (use highest confidence if multiple)
+            if (reviewStatuses.Count > 0)
+            {
+                var highestStatus = ClinVarCommon.ReviewStatus.no_assertion;
+                foreach (var status in reviewStatuses)
+                {
+                    if (status > highestStatus)
+                        highestStatus = status;
+                }
+                _reviewStatus = ClinVarCommon.ReviewStatusStrings.ContainsKey(highestStatus)
+                    ? ClinVarCommon.ReviewStatusStrings[highestStatus]
+                    : null;
+            }
+        }
+
+        private void ExtractClassificationData(XElement classificationElement, List<string> allSignificances, List<ClinVarCommon.ReviewStatus> reviewStatuses)
+        {
+            // Extract review status
+            var reviewStatusString = classificationElement.Element(ReviewStatusTag)?.Value;
+            if (reviewStatusString != null && ClinVarCommon.ReviewStatusNameMapping.ContainsKey(reviewStatusString))
+            {
+                reviewStatuses.Add(ClinVarCommon.ReviewStatusNameMapping[reviewStatusString]);
+            }
+
+            // Extract significance from Description element
+            var description = classificationElement.Element(DescriptionTag)?.Value;
+            if (!string.IsNullOrEmpty(description))
+            {
+                var significances = ClinVarCommon.GetSignificances(description.ToLower(), null);
+                if (significances != null)
+                {
+                    foreach (var sig in significances)
+                    {
+                        if (ClinVarCommon.ValidPathogenicity.Contains(sig))
+                        {
+                            allSignificances.Add(sig);
+                        }
+                        else
+                        {
+                            throw new InvalidDataException($"Invalid pathogenicity found in {_id}. Observed: {sig}");
+                        }
+                    }
+                }
+            }
+        }
+
         private void ValidateSignificance(string[] significances)
         {
+            if (significances == null) return;
             foreach (var significance in significances)
             {
-                if (!ClinVarCommon.ValidPathogenicity.Contains(significance)) 
+                if (!ClinVarCommon.ValidPathogenicity.Contains(significance))
                     throw new InvalidDataException($"Invalid pathogenicity found in {_id}. Observed: {significance}");
             }
         }
