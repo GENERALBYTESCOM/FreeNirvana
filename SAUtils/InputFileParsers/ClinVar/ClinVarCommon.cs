@@ -48,19 +48,29 @@ namespace SAUtils.InputFileParsers.ClinVar
             "conflicting data from submitters",
             "uncertain risk allele",
             "low penetrance",
-            
+            "likely pathogenic, low penetrance",
+            "pathogenic, low penetrance",
+
+            // VUS sub-classifications (ClinVar 2025+)
+            "vus-high",
+            "vus-mid",
+            "vus-low",
+
             // Oncogenicity classifications (ClinVar VCV 2.5+)
             "oncogenic",
             "likely oncogenic",
             "uncertain oncogenicity",
+            "conflicting classifications of oncogenicity",
             "benign or likely benign",
             "predicted oncogenic",
-            
+
             // Somatic clinical impact classifications (ClinVar VCV 2.5+)
             "tier i - strong",
             "tier ii - potential",
             "tier iii - unknown",
+            "tier iii - uncertain significance",
             "tier iv - benign",
+            "tier iv - benign/likely benign",
             
             "variant to named protein",
             "variation in modifier gene to disease"
